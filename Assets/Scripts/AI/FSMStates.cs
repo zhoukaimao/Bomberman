@@ -39,62 +39,73 @@ public class ClearState : FSMState
     public ClearState()
     {
         base.stateID = StateID.Clear;
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
     public override void DoBeforeEntering()
     {
         base.DoBeforeEntering();
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        
 
         arrived = true;//set arrived to be true, and start path finding
     }
     public override void Reason(GameObject player, GameObject npc)
     {
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
         //check whether npc dead
-        if (npc.GetComponent<NPC>().GetHP() <= 0.01f)
+        if (_bomberman.HP < 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Clear2Dead);
+            _aicontroller.SetTransition(Transition.Clear2Dead);
             return;
         }
         //check bombs left
-        if (npc.GetComponent<NPC>().GetBombLeft() <= 0)
+        if (_bomberman.bombLeft <= 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Clear2Wait);
+            _aicontroller.SetTransition(Transition.Clear2Wait);
             return;
         }
         //if no wall left, switch to teamwork
         if (gameManager.GetDwallLeft()<=0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Clear2Teamwork);
+            _aicontroller.SetTransition(Transition.Clear2Teamwork);
             return;
         }
         //check player pos, whether player is visible for this npc
-        if (npc.GetComponent<AIController>().CanSeePlayer())
+        if (_aicontroller.CanSeePlayer())
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Clear2Chase);
+            _aicontroller.SetTransition(Transition.Clear2Chase);
             return;
         }
         
     }
     public override void Act(GameObject player, GameObject npc)
     {
-        
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
+        BombermanMove _bombermanMove = npc.GetComponent<BombermanMove>();
         //following the path
         //when arriving the target, place a bomb, transfer to clear state agian or wait state
         if (arrived)
         {
-            path = npc.GetComponent<AIController>().PathFindDwall();
+            path = _aicontroller.PathFindDwall();
             if (path == null) return;
             currentPos = 0;
             arrived = false;
         }
-        npc.GetComponent<NPC>().MoveTo(path[currentPos]);
-        if (Vector3.Magnitude(npc.transform.position - Util.Map2World(path[currentPos])) < 0.1)
+        //if the next pos safe
+        if (_bombermanMove.MoveTo(path[currentPos]))
         {
             currentPos++;
+            
             if (currentPos >= path.Length)
             {
-                npc.GetComponent<NPC>().PlaceBomb();
+                _bomberman.PlaceBomb();
                 arrived = true;
+                return;
+            }
+            if (!_aicontroller.GridIsSafe(path[currentPos]))//if the next grid is unsafe
+            {
+                _aicontroller.SetTransition(Transition.Clear2Wait);//transfer to wait
             }
         }
     }
@@ -114,61 +125,70 @@ public class ChaseState : FSMState
     public ChaseState()
     {
         base.stateID = StateID.Chase;
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
     public override void DoBeforeEntering()
     {
         base.DoBeforeEntering();
-
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
 
         arrived = true;
         //before entering, find a path to player position
     }
     public override void Reason(GameObject player, GameObject npc)
     {
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
         //if dead
-        if (npc.GetComponent<NPC>().GetHP() <= 0.01f)
+        if (_bomberman.HP < 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Chase2Dead);
+            _aicontroller.SetTransition(Transition.Chase2Dead);
             return;
         }
         //check bombs left
-        if (npc.GetComponent<NPC>().GetBombLeft() <= 0)
+        if (_bomberman.bombLeft <= 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Chase2Wait);
+            _aicontroller.SetTransition(Transition.Chase2Wait);
             return;
         }
         //if no wall left, switch to teamwork
         if (gameManager.GetDwallLeft() <= 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Chase2Teamwork);
+            _aicontroller.SetTransition(Transition.Chase2Teamwork);
             return;
         }
         //if lost player
-        if (!npc.GetComponent<AIController>().CanSeePlayer())
+        if (!_aicontroller.CanSeePlayer())
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Chase2Clear);
+            _aicontroller.SetTransition(Transition.Chase2Clear);
             return;
         }
     }
     public override void Act(GameObject player, GameObject npc)
     {
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
+        BombermanMove _bombermanMove = npc.GetComponent<BombermanMove>();
         if (arrived)
         {
-            path = npc.GetComponent<AIController>().PathFindPlayer();
+            path = _aicontroller.PathFindPlayer();
             if (path == null) return;
             currentPos = 0;
             arrived = false;
             
         }
-        npc.GetComponent<NPC>().MoveTo(path[currentPos]);
-        if (Vector3.Magnitude(npc.transform.position - Util.Map2World(path[currentPos])) < 0.1)
+        if (_bombermanMove.MoveTo(path[currentPos]))
         {
             currentPos++;
+            
             if (currentPos >= path.Length)
             {
-                npc.GetComponent<NPC>().PlaceBomb();
+                _bomberman.PlaceBomb();
                 arrived = true;
+                return;
+            }
+            if (!_aicontroller.GridIsSafe(path[currentPos]))//if the next grid is unsafe
+            {
+                _aicontroller.SetTransition(Transition.Chase2Wait);//transfer to wait
             }
         }
         
@@ -189,61 +209,81 @@ public class WaitSate : FSMState
     public WaitSate()
     {
         base.stateID = StateID.Wait;
+        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
     public override void DoBeforeEntering()
     {
         base.DoBeforeEntering();
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
 
         arrived = true;
     }
     public override void Reason(GameObject player, GameObject npc)
     {
-        if (npc.GetComponent<NPC>().GetHP() <= 0.01f)
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
+        if (_bomberman.HP < 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Wait2Dead);
+            _aicontroller.SetTransition(Transition.Wait2Dead);
             return;
         }
-        if (npc.GetComponent<NPC>().GetBombLeft() > 0)
+        if (_bomberman.bombLeft > 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Wait2Clear);
-            return;
+            if (_aicontroller.CanSeePlayer())
+            {
+                _aicontroller.SetTransition(Transition.Wait2Chase);
+                return;
+            }
+            else
+            {
+                _aicontroller.SetTransition(Transition.Wait2Clear);
+                return;
+            }
         }
         //if can see player
-        if (npc.GetComponent<AIController>().CanSeePlayer())
-        {
-            npc.GetComponent<AIController>().SetTransition(Transition.Wait2Chase);
-            return;
-        }
+        //if (npc.GetComponent<AIController>().CanSeePlayer()&&npc.GetComponent<AIController>().GridIsSafe(Util.World2Map(player.transform.position)))
+        //{
+        //    npc.GetComponent<AIController>().SetTransition(Transition.Wait2Chase);
+        //    return;
+        //}
         //if no wall left, switch to teamwork
         if (gameManager.GetDwallLeft() <= 0)
         {
-            npc.GetComponent<AIController>().SetTransition(Transition.Wait2Teamwork);
+            _aicontroller.SetTransition(Transition.Wait2Teamwork);
             return;
         }
 
     }
     public override void Act(GameObject player, GameObject npc)
     {
-        if (npc.GetComponent<NPC>().IsSafe())
+        AIController _aicontroller = npc.GetComponent<AIController>();
+        Bomberman _bomberman = npc.GetComponent<Bomberman>();
+        BombermanMove _bombermanMove = npc.GetComponent<BombermanMove>();
+        if (_aicontroller.IsSafe())
         {
             arrived = true;
             return;
         }
         if (arrived)
         {
-            path = npc.GetComponent<AIController>().PathFindPlayer();
+            path = _aicontroller.PathFindSafe();
             if (path == null) return;
             currentPos = 0;
             arrived = false;
         }
-        npc.GetComponent<NPC>().MoveTo(path[currentPos]);
-        if (Vector3.Magnitude(npc.transform.position - Util.Map2World(path[currentPos])) < 0.1)
+        if (_bombermanMove.MoveTo(path[currentPos]))
         {
             currentPos++;
+            
             if (currentPos >= path.Length)
             {
                 //npc.GetComponent<NPC>().PlaceBomb();
+                arrived = true;
+                return;
+            }
+            if (_aicontroller.GridIsDead(path[currentPos]))//if the next grid is unsafe
+            {
+                //npc.GetComponent<AIController>().SetTransition(Transition.Clear2Wait);
+                //refind path
                 arrived = true;
             }
         }
@@ -264,18 +304,18 @@ public class TeamworkSate : FSMState
     public override void DoBeforeEntering()
     {
         base.DoBeforeEntering();
-        npcLeft = GameObject.Find("NPCManager").GetComponent<NPCManager>().GetNPCLeft();
+        npcLeft = GameObject.Find("GameManager").GetComponent<GameManager>().GetNPCLeft();
 
         arrived = true;
     }
     public override void Reason(GameObject player, GameObject npc)
     {
-        if (npc.GetComponent<NPC>().GetHP() <= 0.01f)
+        if (npc.GetComponent<Bomberman>().HP < 0)
         {
             npc.GetComponent<AIController>().SetTransition(Transition.Teamwork2Dead);
             return;
         }
-        if (npc.GetComponent<NPC>().GetBombLeft() <= 0)
+        if (npc.GetComponent<Bomberman>().bombLeft <= 0)
         {
             npc.GetComponent<AIController>().SetTransition(Transition.Teamwork2Wait);
             return;
@@ -293,14 +333,19 @@ public class TeamworkSate : FSMState
                 arrived = false;
                 
             }
-            npc.GetComponent<NPC>().MoveTo(path[currentPos]);
+            npc.GetComponent<BombermanMove>().MoveTo(path[currentPos]);
             if (Vector3.Magnitude(npc.transform.position - Util.Map2World(path[currentPos])) < 0.1)
             {
                 currentPos++;
                 if (currentPos >= path.Length)
                 {
-                    npc.GetComponent<NPC>().PlaceBomb();
+                    npc.GetComponent<Bomberman>().PlaceBomb();
                     arrived = true;
+                    return;
+                }
+                if (!npc.GetComponent<AIController>().GridIsSafe(path[currentPos]))//if the next grid is unsafe
+                {
+                    npc.GetComponent<AIController>().SetTransition(Transition.Teamwork2Wait);//refind path
                 }
             }
         }

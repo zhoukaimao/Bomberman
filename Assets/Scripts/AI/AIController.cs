@@ -8,30 +8,30 @@ using System.Collections.Generic;
 public class AIController : MonoBehaviour
 {
     public GameObject player;
-    public float viewDist = 5f;
+    public float viewDist = 2f;
     private FSMSystem fsm;
 
     private int flameDist = 0;
 
-    private GameManager gameManager;
+    private GameManager _gameManager;
     private CONSTANT.ObjEnum[,] map;
-    private int[,] grade;
+    private float[,] grade;
 
-    public int bombGrade = -5;
-    public int dwallGrade = 5;
-    public int bonusGrade = 3;
-    public int trapGrade = -2;
-    public int flameGrade = -10;
-    public int playerGrade = 8;
-    public int deadendGrade = -2;
+    public float bombGrade = -5;
+    public float dwallGrade = 5;
+    public float bonusGrade = 3;
+    public float trapGrade = -10;
+    public float flameGrade = -10;
+    public float playerGrade = 8;
+    public float deadendGrade = -2;
     // Use this for initialization
     void Start()
     {
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
 
-        player = GameObject.Find("player");
+        player = _gameManager.GetPlayer();
 
-        grade = new int[CONSTANT.ROW, CONSTANT.COL];
+        grade = new float[CONSTANT.ROW, CONSTANT.COL];
 
         //create fsm, add state and transition
         fsm = new FSMSystem();
@@ -69,13 +69,14 @@ public class AIController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        map = gameManager.GetMap();
-        flameDist = GetComponent<NPC>().GetFlameDist();
+        map = _gameManager.GetMap();
+        flameDist = (int)GetComponent<Bomberman>().flameDist;
+
         UpdateGrade();
 
         fsm.CurrentState.Reason(player,gameObject);
         fsm.CurrentState.Act(player,gameObject);
-
+        //Debug.Log(gameObject.name+" "+fsm.CurrentState.ToString());
         
     }
     void UpdateGrade()
@@ -89,53 +90,50 @@ public class AIController : MonoBehaviour
         {
             for (var j = 0; j < CONSTANT.COL; j++)
             {
-                CONSTANT.ObjEnum obj = map[i, j];
-                if (obj == CONSTANT.ObjEnum.Bomb)
+                switch (map[i, j])
                 {
-                    if (i - 1 >= 0) grade[i - 1, j] += bombGrade;
-                    if (i + 1 <= CONSTANT.ROW - 1) grade[i + 1, j] += bombGrade;
-                    if (i - 2 >= 0) grade[i - 2, j] += bombGrade / 2;
-                    if (i + 2 <= CONSTANT.ROW - 1) grade[i + 2, j] += bombGrade / 2;
-                    if (j - 1 >= 0) grade[i, j - 1] += bombGrade;
-                    if (j + 1 <= CONSTANT.COL - 1) grade[i, j + 1] += bombGrade;
-                    if (j - 2 >= 0) grade[i, j - 2] += bombGrade / 2;
-                    if (j + 2 <= CONSTANT.COL - 1) grade[i, j + 2] += bombGrade / 2;
-                }
-                else if (obj == CONSTANT.ObjEnum.Flame)
-                {
-                    grade[i, j] += flameGrade;
-                }
-                else if (obj == CONSTANT.ObjEnum.Bonus)
-                {
-                    grade[i, j] += bonusGrade;
-                }
-                else if (obj == CONSTANT.ObjEnum.Trap)
-                {
-                    grade[i, j] += trapGrade;
-                }
-                else if (obj == CONSTANT.ObjEnum.Dwall)
-                {
-                    if (i - 1 >= 0) grade[i - 1, j] += dwallGrade;
-                    if (i + 1 <= CONSTANT.ROW - 1) grade[i + 1, j] += dwallGrade;
-                    if (i - 2 >= 0) grade[i - 2, j] += dwallGrade / 2;
-                    if (i + 2 <= CONSTANT.ROW - 1) grade[i + 2, j] += dwallGrade / 2;
-                    if (j - 1 >= 0) grade[i, j - 1] += dwallGrade;
-                    if (j + 1 <= CONSTANT.COL - 1) grade[i, j + 1] += dwallGrade;
-                    if (j - 2 >= 0) grade[i, j - 2] += dwallGrade / 2;
-                    if (j + 2 <= CONSTANT.COL - 1) grade[i, j + 2] += dwallGrade / 2;
-                }
-                else if (obj == CONSTANT.ObjEnum.Player)
-                {
-                    grade[i, j] += playerGrade;
-                }
-                if (obj == CONSTANT.ObjEnum.Empty)
-                {
-                    int wayCnt = 0;
-                    if (i - 1 >= 0 && CanWalkThrough(new Vector2(i - 1, j))) wayCnt++;
-                    if (j - 1 >= 0 && CanWalkThrough(new Vector2(i, j - 1))) wayCnt++;
-                    if (i + 1 <= CONSTANT.ROW - 1 && CanWalkThrough(new Vector2(i + 1, j))) wayCnt++;
-                    if (j + 1 <= CONSTANT.COL - 1 && CanWalkThrough(new Vector2(i, j + 1))) wayCnt++;
-                    grade[i, j] += deadendGrade * (4 - wayCnt);
+                    case CONSTANT.ObjEnum.Bomb: 
+                        if (i - 1 >= 0) grade[i - 1, j] += bombGrade;
+                        if (i + 1 <= CONSTANT.ROW - 1) grade[i + 1, j] += bombGrade;
+                        if (i - 2 >= 0) grade[i - 2, j] += bombGrade / 2;
+                        if (i + 2 <= CONSTANT.ROW - 1) grade[i + 2, j] += bombGrade / 2;
+                        if (j - 1 >= 0) grade[i, j - 1] += bombGrade;
+                        if (j + 1 <= CONSTANT.COL - 1) grade[i, j + 1] += bombGrade;
+                        if (j - 2 >= 0) grade[i, j - 2] += bombGrade / 2;
+                        if (j + 2 <= CONSTANT.COL - 1) grade[i, j + 2] += bombGrade / 2;
+                        break;
+                    case CONSTANT.ObjEnum.Flame: 
+                        grade[i, j] += flameGrade;
+                        break;
+                    case CONSTANT.ObjEnum.Bonus: 
+                        grade[i, j] += bonusGrade;
+                        break;
+                    case CONSTANT.ObjEnum.Trap: 
+                        grade[i, j] += trapGrade;
+                        break;
+                    case CONSTANT.ObjEnum.Dwall: 
+                        if (i - 1 >= 0) grade[i - 1, j] += dwallGrade;
+                        if (i + 1 <= CONSTANT.ROW - 1) grade[i + 1, j] += dwallGrade;
+                        if (i - 2 >= 0) grade[i - 2, j] += dwallGrade / 2;
+                        if (i + 2 <= CONSTANT.ROW - 1) grade[i + 2, j] += dwallGrade / 2;
+                        if (j - 1 >= 0) grade[i, j - 1] += dwallGrade;
+                        if (j + 1 <= CONSTANT.COL - 1) grade[i, j + 1] += dwallGrade;
+                        if (j - 2 >= 0) grade[i, j - 2] += dwallGrade / 2;
+                        if (j + 2 <= CONSTANT.COL - 1) grade[i, j + 2] += dwallGrade / 2;
+                        break;
+                    case CONSTANT.ObjEnum.Player: 
+                        grade[i, j] += playerGrade;
+                        break;
+                    case CONSTANT.ObjEnum.Empty: 
+                        int wayCnt = 0;
+                        if (i - 1 >= 0 && CanWalkThrough(new Vector2(i - 1, j))) wayCnt++;
+                        if (j - 1 >= 0 && CanWalkThrough(new Vector2(i, j - 1))) wayCnt++;
+                        if (i + 1 <= CONSTANT.ROW - 1 && CanWalkThrough(new Vector2(i + 1, j))) wayCnt++;
+                        if (j + 1 <= CONSTANT.COL - 1 && CanWalkThrough(new Vector2(i, j + 1))) wayCnt++;
+                        grade[i, j] += deadendGrade * (4 - wayCnt);
+                        break;
+                    case CONSTANT.ObjEnum.Udwall: break;
+                    default: break;
                 }
             }
         }
@@ -146,13 +144,13 @@ public class AIController : MonoBehaviour
     }
     public bool CanSeePlayer()
     {
-        if (Vector3.Magnitude(player.transform.position - transform.position) <= viewDist) return true;
+        if (player!=null&&Vector3.Magnitude(player.transform.position - transform.position) <= viewDist) return true;
         return false;
     }
     public Vector2[] PathFindDwall()
     {
         //find the nearest dwall, goto the grid with highest grade
-        int maxGrade=0;
+        float maxGrade=0;
         Vector2 tempPos=new Vector2(0,0);
         Vector2 npcPos = Util.World2Map(transform.position);
         int npcX = Mathf.FloorToInt(npcPos.x);
@@ -164,7 +162,7 @@ public class AIController : MonoBehaviour
             {
                 for (var j = -r; j <= r; j++)
                 {
-                    if (npcX + i >= 0 && npcX+i <= CONSTANT.ROW-1 && npcY+j >= 0 && npcY+j < CONSTANT.COL-1 && map[npcX + i, npcY + j]==CONSTANT.ObjEnum.Dwall)
+                    if (Util.ValidMapIndex(npcX+i,npcY+j) && map[npcX + i, npcY + j]==CONSTANT.ObjEnum.Dwall)
                     {
                         if (npcX + i - 1 >= 0 && CanWalkThrough(new Vector2(npcX + i - 1, npcY + j)) && grade[npcX + i - 1, npcY + j] > maxGrade)
                         {
@@ -202,8 +200,6 @@ public class AIController : MonoBehaviour
     public Vector2[] PathFindSafe()
     {
         //find the nearest safe grid
-        int maxGrade = 0;
-        Vector2 tempPos = new Vector2(0, 0);
         Vector2 npcPos = Util.World2Map(transform.position);
         int npcX = Mathf.FloorToInt(npcPos.x);
         int npcY = Mathf.FloorToInt(npcPos.y);
@@ -214,33 +210,47 @@ public class AIController : MonoBehaviour
             {
                 for (var j = -r; j <= r; j++)
                 {
-                    if (npcX + i >= 0 && npcX+i <= CONSTANT.ROW-1 && npcY+j >= 0 && npcY+j < CONSTANT.COL-1 && CanWalkThrough(new Vector2(npcX + i, npcY + j)) )
+                    
+                    if (Util.ValidMapIndex(npcX + i, npcY + j) && CanWalkThrough(new Vector2(npcX + i, npcY + j)))
                     {
-                        bool isSafe = true;
-                       //according to itself bomb flame distance, estimate a flame distance
-                        for (var d = -flameDist; d <= flameDist; d++)
+                        if (GridIsSafe(new Vector2(npcX + i, npcY + j)))
                         {
-                            if (map[npcX + i + d, npcY + j] == CONSTANT.ObjEnum.Bomb) isSafe = false;
-                            if (map[npcX + i, npcY + j + d] == CONSTANT.ObjEnum.Bomb) isSafe = false;
-                        }
-                        if (isSafe || grade[npcX + i, npcY + j] > maxGrade)
-                        {
-                            tempPos = new Vector2(npcX + i, npcY + j);
-                            maxGrade = grade[npcX + i, npcY + j];
+                            return PathFind(new Vector2(npcX+i,npcY+j));
                         }
 
                     }
                 }
 
             }
-            if (maxGrade > 0) return PathFind(tempPos);
         }
         return null;
+    }
+    public bool IsSafe()
+    {
+        return GridIsSafe(Util.World2Map(transform.position));
+    }
+    public bool GridIsSafe(Vector2 pos)
+    {
+        int indexX = (int)pos.x;
+        int indexY = (int)pos.y;
+        if (Util.ValidMapIndex(indexX, indexY) && map[indexX, indexY] == CONSTANT.ObjEnum.Flame) return false;
+        //according to itself bomb flame distance, estimate a flame distance
+        for (var d = -flameDist; d <= flameDist; d++)
+        {
+            if (Util.ValidMapIndex(indexX + d, indexY) && map[indexX + d, indexY] == CONSTANT.ObjEnum.Bomb) return false;
+            if (Util.ValidMapIndex(indexX, indexY+d) && map[indexX, indexY+d] == CONSTANT.ObjEnum.Bomb) return false;
+        }
+        return true;
+    }
+    public bool GridIsDead(Vector2 pos)//very dangerous
+    {
+        if (Util.ValidMapIndex((int)pos.x, (int)pos.y) && map[(int)pos.x, (int)pos.y] == CONSTANT.ObjEnum.Flame) return true;
+        else return false;
     }
     public Vector2[] PathFindBonus()
     {
         //find the nearest safe grid
-        int maxGrade = 0;
+        float maxGrade = 0;
         Vector2 tempPos = new Vector2(0, 0);
         Vector2 npcPos = Util.World2Map(transform.position);
         int npcX = Mathf.FloorToInt(npcPos.x);
