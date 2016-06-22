@@ -14,4 +14,8 @@ public class Player : MonoBehaviour {
         HP = GetComponent<Bomberman>().HP;
         if (HP < 0) _gameManager.GameOver();
 	}
+    public float GetHP()
+    {
+        return HP;
+    }
 }

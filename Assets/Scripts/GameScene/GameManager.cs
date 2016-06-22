@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviour {
     AudioManager _audioManager;
     /// <summary>
@@ -63,7 +64,7 @@ public class GameManager : MonoBehaviour {
     }
     public void GameOver()
     {
-        Time.timeScale = 0;
+        SceneManager.LoadScene("GameOver");
     }
     /// <summary>
     /// Instance bomb, 
@@ -260,23 +261,26 @@ public class GameManager : MonoBehaviour {
     /// </summary>
     void LoadMap()
     {
-        initMap = new CONSTANT.ObjEnum[CONSTANT.ROW, CONSTANT.COL] { 
-        {CONSTANT.ObjEnum.Player,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0},
-        {0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
-        {0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0},
-        {0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
-        {0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
-        {0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0,0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
-        {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        {CONSTANT.ObjEnum.Npc,0,0,0,0,0,0,0,0,0,0,0,0,0,CONSTANT.ObjEnum.Npc}
-        };
+        initMap = new CONSTANT.ObjEnum[CONSTANT.ROW, CONSTANT.COL];
+        MapParam mapParam = new DataStoreProcessor().Load<MapParam>(CONSTANT.SaveDataPath+"MapData.map",true);
+        initMap = mapParam.map;
+        //initMap = new CONSTANT.ObjEnum[CONSTANT.ROW, CONSTANT.COL] { 
+        //{CONSTANT.ObjEnum.Player,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0},
+        //{0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
+        //{0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0},
+        //{0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
+        //{0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,0,CONSTANT.ObjEnum.Dwall,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,0,0,0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0,0,CONSTANT.ObjEnum.Dwall,CONSTANT.ObjEnum.Udwall,CONSTANT.ObjEnum.Dwall,0},
+        //{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        //{CONSTANT.ObjEnum.Npc,0,0,0,0,0,0,0,0,0,0,0,0,0,CONSTANT.ObjEnum.Npc}
+        //};
     }
     /// <summary>
     /// according to map loaded, create game scene, and initialize variables
@@ -284,14 +288,16 @@ public class GameManager : MonoBehaviour {
     void CreateScene()
     {
         npc = new List<GameObject>();
-        runtimeMap = initMap;
+        runtimeMap = new CONSTANT.ObjEnum[CONSTANT.ROW, CONSTANT.COL];
+        runtimeMap.Initialize();
         objectMap = new GameObject[CONSTANT.ROW, CONSTANT.COL];
         for (int i = 0; i < CONSTANT.ROW; i++)
         {
             for (int j = 0; j < CONSTANT.COL; j++)
             {
                 GameObject inst;
-                switch (initMap[i, j])
+                runtimeMap[i, j] = (CONSTANT.ObjEnum)initMap.GetValue(i * CONSTANT.ROW + j);
+                switch (runtimeMap[i, j])
                 {
                     case CONSTANT.ObjEnum.Dwall:
                         inst = Instantiate(dwallPrefabs[Random.Range(0,dwallPrefabs.Length)]);

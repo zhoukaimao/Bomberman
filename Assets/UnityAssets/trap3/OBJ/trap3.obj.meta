@@ -3,9 +3,24 @@ guid: c9620876e0800fd4ba1ecfab40b84792
 ModelImporter:
   serializedVersion: 19
   fileIDToRecycleName:
+    100000: pinchos
+    100002: tap
+    100004: tramp3
+    100006: //RootNode
+    400000: pinchos
+    400002: tap
+    400004: tramp3
+    400006: //RootNode
+    2300000: pinchos
+    2300002: tap
+    2300004: tramp3
+    3300000: pinchos
+    3300002: tap
+    3300004: tramp3
     4300000: pinchos
     4300002: tap
     4300004: tramp3
+    11100000: //RootNode
   materials:
     importMaterials: 1
     materialName: 0

@@ -92,7 +92,7 @@ public class AIController : MonoBehaviour
             fsm.CurrentState.Act(player, gameObject);
             
         }
-        //Debug.Log(gameObject.name+" "+fsm.CurrentState.ToString());
+        Debug.Log(gameObject.name+" "+fsm.CurrentState.ToString());
         
     }
     public void ThinkForAWhile()
@@ -249,7 +249,7 @@ public class AIController : MonoBehaviour
                 }
                     
             }
-            if (maxGrade > 0) return PathFind(tempPos);
+            if (maxGrade >= 0) return PathFind(tempPos);
         }
         return null;
     }
@@ -338,7 +338,7 @@ public class AIController : MonoBehaviour
                 }
 
             }
-            if (maxGrade > 0) return PathFind(tempPos);
+            if (maxGrade >= 0) return PathFind(tempPos);
         }
         return null;
     }

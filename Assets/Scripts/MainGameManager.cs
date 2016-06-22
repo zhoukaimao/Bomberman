@@ -5,7 +5,7 @@ public class MainGameManager : MonoBehaviour
 {
     //scene
     private const string CHOOSE_SCENE_NAME = "chooseScene";
-    private const string CREATE_SCENE_NAME = "createScene";
+    private const string CREATE_SCENE_NAME = "EditMap";
     private const string START_SCENE_NAME = "startScene";
     private const string GAME_SCENE_NAME = "Demo";
 
