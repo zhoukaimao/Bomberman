@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+<<<<<<< HEAD:Assets/Scripts/CreateScripts/CreateManager1.cs.meta
+guid: 058b7987a72896e45b468e7e87d9de90
+timeCreated: 1467891722
+=======
+guid: 619a2130de362c04cb9be64007916cc0
+timeCreated: 1462971011
+>>>>>>> parent of 3152d9f... Add map editor and UI:Assets/Scripts/CreateMapEditor/CreateMapManager.cs.meta
+licenseType: Free
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
